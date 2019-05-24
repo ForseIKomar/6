@@ -1,0 +1,66 @@
+LIBRARY ieee; 
+USE ieee.std_logic_1164.all; 
+USE ieee.std_logic_arith.all; 
+ENTITY control_unit IS 
+	PORT(	U : IN std_logic_vector ( 5 DOWNTO 0 );
+		clk : IN std_logic; 
+		rst : IN std_logic;
+		V : OUT std_logic_vector ( 7 DOWNTO 0 ) );
+END control_unit;
+
+ARCHITECTURE moore OF control_unit IS 
+	TYPE STATE_TYPE IS (s1, s2, s3, s4, s5, s6); 
+	SIGNAL current_state : STATE_TYPE; 
+BEGIN
+	clocked_proc : PROCESS (clk, rst) 
+	BEGIN
+	IF (RST = '0') THEN
+		current_state <= s1;
+	ELSIF (clk'EVENT AND clk ='1') THEN
+	CASE current_state IS
+		WHEN s1 =>
+			V <= '00100000';
+			IF (U(4 downto 2) = '111') THEN 	current_state <= s2;
+			ELSIF (U(0) = '1' OR U(1) = '0') THEN 	current_state <= s4;
+			ELSE					current_state <= s1;
+			END IF;
+		WHEN s2 =>
+			IF (U(4) = '1' OR U(5) = '1') THEN 	current_state <= s3;
+								V <= '10000100';
+			ELSE					current_state <= s2;
+								V <= '10000000';
+			END IF;
+		WHEN s3 =>
+			IF (U(1 downto 0) = '11') THEN 		current_state <= s1;
+								V <= '01000001';
+			ELSIF (U(9) = '0') THEN 		current_state <= s6;
+								V <= '01000101';
+			ELSE					current_state <= s3;
+								V <= '01000001';
+			END IF;
+		WHEN s4 =>
+			IF (U(2) = '1' AND U(5) = '0') THEN 	current_state <= s5;
+								V <= '00000110';
+			ELSIF (U(5) = '1') THEN 		current_state <= s3;
+								V <= '00010110';
+			ELSE					current_state <= s4;
+								V <= '00000110';
+			END IF;
+		WHEN s5 =>
+			V <= '00010000'
+			IF (U(0) = '1' OR U(2) = '0') THEN 	current_state <= s6;
+								V <= '00011100'
+			ELSE					current_state <= s5;
+								V <= '01010000'
+			END IF;
+		WHEN s6 =>
+			V <= '00001000'
+			IF (U(0) = '1' OR U(3) = '1') THEN 	current_state <= s6;
+			ELSE					current_state <= s1;
+			END IF;
+		WHEN OTHERS =>
+			current_state <= s1;
+	END CASE;
+	END IF;
+	END PROCESS clocked_proc;
+END moore;
